@@ -1,9 +1,25 @@
-/* ===== GLOBAL ===== */
+/* ===== GLOBAL - DOVE BACKGROUND ===== */
 body {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    background-image: url('/static/images/Dove.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: white;
     font-family: 'Segoe UI', sans-serif;
     min-height: 100vh;
+}
+
+/* Dark overlay for text readability */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
 }
 
 /* ===== CARDS ===== */
@@ -60,16 +76,8 @@ body {
     font-size: 40px;
 }
 
-/* Table styling */
-.table {
-    color: white;
-    background-color: #2f324b;
-}
-
-.table-striped > tbody > tr:nth-of-type(odd) > * {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.table-dark {
-    background-color: #1a1a2e;
+/* Make all content readable on top of background */
+.container, .navbar, .card, .modal-content, .table, .alert {
+    position: relative;
+    z-index: 1;
 }

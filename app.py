@@ -9,6 +9,7 @@ import os
 import uuid
 from reportlab.pdfgen import canvas
 from werkzeug.utils import secure_filename
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -155,13 +156,26 @@ def add_user():
         return redirect(url_for('dashboard'))
     
     username = request.form.get("username")
-    password = generate_password_hash(request.form.get("password"))
+    password = request.form.get("password")
+    
+    # Check if user already exists
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        flash(f"Username '{username}' already exists! Please choose a different username.", "danger")
+        return redirect(url_for('admin_panel'))
+    
+    # Check if password is empty
+    if not password:
+        flash("Password cannot be empty", "danger")
+        return redirect(url_for('admin_panel'))
+    
+    hashed_pw = generate_password_hash(password)
     
     new_user = User(
         username=username,
-        password=password,
+        password=hashed_pw,
         role="user",
-        is_approved=True  # Admin-created users are auto-approved
+        is_approved=True
     )
     
     db.session.add(new_user)
@@ -173,7 +187,9 @@ def add_user():
 @login_required
 def dashboard():
     count = Obituary.query.count()
-    return render_template("dashboard.html", count=count)
+    # Get 5 most recent records (ordered by ID descending = newest first)
+    recent_records = Obituary.query.order_by(Obituary.id.desc()).limit(5).all()
+    return render_template("dashboard.html", count=count, records=recent_records)
 
 @app.route("/add", methods=["GET", "POST"])
 @login_required
@@ -240,6 +256,12 @@ def delete(id):
     flash("Record deleted", "warning")
     return redirect(url_for('records'))
 
+@app.route('/uploads/<filename>')
+@login_required
+def uploaded_file(filename):
+    """Serve uploaded files"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 @login_required
 def edit(id):
@@ -291,26 +313,23 @@ def search():
 @app.route("/pdf/<int:id>")
 @login_required
 def generate_pdf(id):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    import tempfile
+    from PIL import Image as PILImage
+    
     try:
         record = Obituary.query.get_or_404(id)
         
-        # Create temp directory if it doesn't exist
-        temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_pdfs')
-        os.makedirs(temp_dir, exist_ok=True)
+        # Create temporary file
+        fd, filename = tempfile.mkstemp(suffix='.pdf', prefix=f'obituary_{id}_')
+        os.close(fd)
         
-        # Create unique filename
-        safe_name = "".join(c for c in record.full_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        filename = os.path.join(temp_dir, f"obituary_{id}_{safe_name}_{uuid.uuid4().hex[:8]}.pdf")
-        
-        # Create PDF
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib import colors
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT
-        
-        # Create document
+        # Create PDF document
         doc = SimpleDocTemplate(filename, pagesize=letter)
         styles = getSampleStyleSheet()
         story = []
@@ -320,7 +339,7 @@ def generate_pdf(id):
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=24,
-            textColor=colors.darkblue,
+            textColor=colors.HexColor('#2c3e50'),
             alignment=TA_CENTER,
             spaceAfter=30
         )
@@ -329,8 +348,9 @@ def generate_pdf(id):
             'CustomHeading',
             parent=styles['Heading2'],
             fontSize=14,
-            textColor=colors.darkgreen,
-            spaceAfter=10
+            textColor=colors.HexColor('#2980b9'),
+            spaceAfter=10,
+            alignment=TA_LEFT
         )
         
         normal_style = ParagraphStyle(
@@ -344,18 +364,64 @@ def generate_pdf(id):
         story.append(Paragraph(f"Obituary: {record.full_name}", title_style))
         story.append(Spacer(1, 0.2 * inch))
         
-        # Details Table
+        # ===== PHOTO SECTION =====
+        if record.photo:
+            # Find the photo file
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], record.photo)
+            
+            # Also check in static/uploads if needed
+            if not os.path.exists(photo_path):
+                photo_path = os.path.join('static', 'uploads', record.photo)
+            
+            if os.path.exists(photo_path):
+                try:
+                    # Open and resize image
+                    img = PILImage.open(photo_path)
+                    
+                    # Calculate aspect ratio
+                    img_width, img_height = img.size
+                    max_width = 2 * inch
+                    max_height = 2.5 * inch
+                    
+                    # Resize maintaining aspect ratio
+                    ratio = min(max_width / img_width, max_height / img_height)
+                    new_width = img_width * ratio
+                    new_height = img_height * ratio
+                    
+                    # Add image to PDF
+                    story.append(Spacer(1, 0.2 * inch))
+                    
+                    # Create a centered table for the image
+                    image_table_data = [[Image(photo_path, width=new_width, height=new_height)]]
+                    image_table = Table(image_table_data, colWidths=[6 * inch])
+                    image_table.setStyle(TableStyle([
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ]))
+                    story.append(image_table)
+                    story.append(Spacer(1, 0.3 * inch))
+                    
+                except Exception as e:
+                    # If image fails to load, show error message
+                    story.append(Paragraph(f"<i>[Photo could not be loaded: {str(e)}]</i>", normal_style))
+                    story.append(Spacer(1, 0.2 * inch))
+            else:
+                story.append(Paragraph("<i>[Photo file not found on server]</i>", normal_style))
+                story.append(Spacer(1, 0.2 * inch))
+        
+        # ===== DETAILS TABLE =====
         data = [
             ["Full Name:", record.full_name or "Not specified"],
             ["Date of Birth:", record.date_of_birth or "Not specified"],
             ["Date of Death:", record.date_of_death or "Not specified"],
         ]
         
-        table = Table(data, colWidths=[1.5 * inch, 4 * inch])
+        table = Table(data, colWidths=[1.8 * inch, 4.2 * inch])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
@@ -365,30 +431,52 @@ def generate_pdf(id):
         story.append(table)
         story.append(Spacer(1, 0.3 * inch))
         
-        # Biography
+        # ===== BIOGRAPHY =====
         if record.biography:
             story.append(Paragraph("Biography", heading_style))
-            story.append(Paragraph(record.biography.replace('\n', '<br/>'), normal_style))
+            # Replace newlines with HTML line breaks
+            bio_text = record.biography.replace('\n', '<br/>').replace('\r', '<br/>')
+            story.append(Paragraph(bio_text, normal_style))
             story.append(Spacer(1, 0.2 * inch))
         
-        # Funeral Details
+        # ===== FUNERAL DETAILS =====
         if record.funeral_details:
-            story.append(Paragraph("Funeral Details", heading_style))
-            story.append(Paragraph(record.funeral_details.replace('\n', '<br/>'), normal_style))
+            story.append(Paragraph("Funeral / Memorial Details", heading_style))
+            funeral_text = record.funeral_details.replace('\n', '<br/>').replace('\r', '<br/>')
+            story.append(Paragraph(funeral_text, normal_style))
+            story.append(Spacer(1, 0.2 * inch))
         
-        # Footer
+        # ===== FOOTER =====
+        from datetime import datetime
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey,
+            alignment=TA_CENTER
+        )
         story.append(Spacer(1, 0.5 * inch))
-        story.append(Paragraph(f"Generated by DOMS on {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 
-                               ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey, alignment=TA_CENTER)))
+        story.append(Paragraph(f"Generated by Digital Obituary Management System (DOMS) on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", footer_style))
         
         # Build PDF
         doc.build(story)
         
-        # Send file
+        # Send file and cleanup
+        from flask import after_this_request
+        
+        @after_this_request
+        def cleanup(response):
+            try:
+                os.remove(filename)
+            except Exception:
+                pass
+            return response
+        
+        safe_name = "".join(c for c in record.full_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
         return send_file(
             filename, 
             as_attachment=True, 
-            download_name=f"obituary_{record.full_name}.pdf",
+            download_name=f"obituary_{safe_name}.pdf",
             mimetype='application/pdf'
         )
         

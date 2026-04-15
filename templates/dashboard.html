@@ -64,7 +64,7 @@
         {% endif %}
     </div>
 
-    <!-- RECENT RECORDS SECTION (Optional) -->
+    <!-- RECENT RECORDS SECTION -->
     <div class="mt-5">
         <h4>Recent Records</h4>
         <div class="table-responsive">
@@ -78,26 +78,35 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set recent = records[:5] if records is defined else [] %}
-                    {% if recent %}
-                        {% for r in recent %}
+                    {% if records and records|length > 0 %}
+                        {% for r in records %}
                         <tr>
                             <td>{{ r.full_name }}</td>
-                            <td>{{ r.date_of_birth }}</td>
-                            <td>{{ r.date_of_death }}</td>
+                            <td>{{ r.date_of_birth or 'Not specified' }}</td>
+                            <td>{{ r.date_of_death or 'Not specified' }}</td>
                             <td>
                                 <a href="{{ url_for('view_obituary', id=r.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('edit', id=r.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                            </div>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="4" class="text-center text-muted">No records yet. Click "Add Obituary" to create one.</td>
+                            <td colspan="4" class="text-center text-muted">
+                                No records yet. Click <a href="{{ url_for('add') }}">"Add Obituary"</a> to create your first record.
+                            </td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+        
+        {% if records and records|length > 0 %}
+        <div class="text-center mt-3">
+            <a href="{{ url_for('records') }}" class="btn btn-outline-primary">View All Records →</a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
