@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Edit Obituary</h2>
+
+<form method="POST" enctype="multipart/form-data" class="p-4 shadow">
+    <input name="name" value="{{record.full_name}}" class="form-control mb-3" placeholder="Full Name">
+    
+    <input name="dob" value="{{record.date_of_birth}}" class="form-control mb-3" placeholder="Date of Birth">
+    
+    <input name="dod" value="{{record.date_of_death}}" class="form-control mb-3" placeholder="Date of Death">
+    
+    <textarea name="bio" class="form-control mb-3" placeholder="Biography" rows="4">{{record.biography}}</textarea>
+    
+    <textarea name="funeral" class="form-control mb-3" placeholder="Funeral Details" rows="4">{{record.funeral_details}}</textarea>
+    
+    {% if record.photo %}
+        <div class="mb-3">
+            <p>Current photo: {{ record.photo }}</p>
+        </div>
+    {% endif %}
+    
+    <input type="file" name="photo" class="form-control mb-3" accept="image/*">
+    
+    <button class="btn btn-primary w-100">Update Record</button>
+</form>
+
+{% endblock %}

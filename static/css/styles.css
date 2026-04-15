@@ -1,0 +1,75 @@
+/* ===== GLOBAL ===== */
+body {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+}
+
+/* ===== CARDS ===== */
+.card {
+    background: #2f324b;
+    border: none;
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    transition: 0.3s;
+}
+
+.text-muted {
+    color: #b0b0b0 !important;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+}
+
+/* ===== BUTTONS ===== */
+.btn-custom {
+    border-radius: 30px;
+}
+
+/* ===== CENTER BOX ===== */
+.center-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===== SEARCH BOX ===== */
+.search-box {
+    background: #2f324b;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* Dashboard Cards */
+.action-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Icons */
+.icon {
+    font-size: 40px;
+}
+
+/* Table styling */
+.table {
+    color: white;
+    background-color: #2f324b;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-dark {
+    background-color: #1a1a2e;
+}

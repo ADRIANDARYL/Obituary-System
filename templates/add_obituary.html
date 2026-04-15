@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Add New Obituary Record</h3>
+                </div>
+                <div class="card-body">
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        
+                        <!-- Full Name -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="Enter full name of deceased">
+                        </div>
+                        
+                        <!-- Date of Birth -->
+                        <div class="mb-3">
+                            <label for="dob" class="form-label">Date of Birth</label>
+                            <input type="text" class="form-control" id="dob" name="dob" 
+                                   placeholder="e.g., January 15, 1950 or 1950-01-15">
+                        </div>
+                        
+                        <!-- Date of Death -->
+                        <div class="mb-3">
+                            <label for="dod" class="form-label">Date of Death</label>
+                            <input type="text" class="form-control" id="dod" name="dod" 
+                                   placeholder="e.g., March 20, 2024 or 2024-03-20">
+                        </div>
+                        
+                        <!-- Biography -->
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">Biography / Life Story</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="5" 
+                                      placeholder="Write a tribute..."></textarea>
+                        </div>
+                        
+                        <!-- Funeral Details -->
+                        <div class="mb-3">
+                            <label for="funeral" class="form-label">Funeral / Memorial Details</label>
+                            <textarea class="form-control" id="funeral" name="funeral" rows="4" 
+                                      placeholder="Date, time, location of funeral service..."></textarea>
+                        </div>
+                        
+                        <!-- Photo Upload -->
+                        <div class="mb-3">
+                            <label for="photo" class="form-label">Photo (Optional)</label>
+                            <input type="file" class="form-control" id="photo" name="photo" 
+                                   accept="image/png, image/jpeg, image/jpg, image/gif, image/webp">
+                            <small class="text-muted">Accepted formats: PNG, JPG, JPEG, GIF, WEBP</small>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="icon">💾</i> Save Obituary Record
+                            </button>
+                            <a href="{{ url_for('records') }}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                        
+                    </form>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header {
+        border-radius: 10px 10px 0 0;
+    }
+    .form-label {
+        font-weight: 600;
+    }
+    textarea {
+        resize: vertical;
+    }
+</style>
+
+{% endblock %}

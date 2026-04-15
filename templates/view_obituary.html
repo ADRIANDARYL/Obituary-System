@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow">
+    <div class="card-header bg-dark text-white">
+        <h3>{{ record.full_name }}</h3>
+    </div>
+    <div class="card-body">
+        {% if record.photo %}
+            <div class="text-center mb-4">
+                <img src="{{ url_for('static', filename='uploads/' + record.photo) }}" 
+                     alt="Photo" style="max-width: 300px; border-radius: 10px;">
+            </div>
+        {% endif %}
+        
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 150px;">Date of Birth</th>
+                <td>{{ record.date_of_birth }}</td>
+            </tr>
+            <tr>
+                <th>Date of Death</th>
+                <td>{{ record.date_of_death }}</td>
+            </tr>
+            <tr>
+                <th>Biography</th>
+                <td>{{ record.biography }}</td>
+            </tr>
+            <tr>
+                <th>Funeral Details</th>
+                <td>{{ record.funeral_details }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="card-footer">
+        <a href="/records" class="btn btn-secondary">Back to Records</a>
+        <a href="/edit/{{ record.id }}" class="btn btn-primary">Edit</a>
+        <a href="/pdf/{{ record.id }}" class="btn btn-success">Download PDF</a>
+    </div>
+</div>
+
+{% endblock %}

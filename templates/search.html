@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Search Records</h2>
+
+<form method="POST" class="p-4 shadow mb-4">
+    <input name="name" class="form-control mb-3" placeholder="Enter name to search" value="{{ search_term }}">
+    <button class="btn btn-primary w-100">Search</button>
+</form>
+
+{% if records %}
+    <h4>Search Results ({{ records|length }} found)</h4>
+    <table class="table table-striped table-hover shadow">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>DOD</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in records %}
+            <tr>
+                <td>{{ r.full_name }}</td>
+                <td>{{ r.date_of_birth }}</td>
+                <td>{{ r.date_of_death }}</td>
+                <td>
+                    <a href="/view/{{r.id}}" class="btn btn-sm btn-info">View</a>
+                    <a href="/edit/{{r.id}}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="/pdf/{{r.id}}" class="btn btn-sm btn-success">PDF</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% elif request.method == 'POST' %}
+    <div class="alert alert-info">No records found for "{{ search_term }}"</div>
+{% endif %}
+
+{% endblock %}

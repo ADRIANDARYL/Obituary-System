@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <!-- TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">DOMS Dashboard</h2>
+        <span class="badge bg-info">Welcome, {{ current_user.username }}</span>
+    </div>
+
+    <!-- STATS CARD -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm text-center p-4">
+                <h5 class="text-muted">Total Obituary Records</h5>
+                <h1 class="fw-bold display-1">{{ count }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION CARDS -->
+    <div class="row g-4">
+        <!-- ADD OBITUARY -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card action-card text-center p-4 shadow-sm">
+                <div class="icon mb-3">➕</div>
+                <h5>Add Obituary</h5>
+                <p class="text-muted small">Create a new memorial record</p>
+                <a href="{{ url_for('add') }}" class="btn btn-success btn-sm">Create New</a>
+            </div>
+        </div>
+
+        <!-- VIEW RECORDS -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card action-card text-center p-4 shadow-sm">
+                <div class="icon mb-3">📁</div>
+                <h5>All Records</h5>
+                <p class="text-muted small">View and manage all obituaries</p>
+                <a href="{{ url_for('records') }}" class="btn btn-primary btn-sm">View All</a>
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card action-card text-center p-4 shadow-sm">
+                <div class="icon mb-3">🔍</div>
+                <h5>Search</h5>
+                <p class="text-muted small">Find specific records by name</p>
+                <a href="{{ url_for('search') }}" class="btn btn-dark btn-sm">Search</a>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL (only visible to admin users) -->
+        {% if current_user.role == 'admin' %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card action-card text-center p-4 shadow-sm">
+                <div class="icon mb-3">⚙️</div>
+                <h5>Admin Panel</h5>
+                <p class="text-muted small">Manage users and system settings</p>
+                <a href="{{ url_for('admin_panel') }}" class="btn btn-warning btn-sm">Manage</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- RECENT RECORDS SECTION (Optional) -->
+    <div class="mt-5">
+        <h4>Recent Records</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Date of Birth</th>
+                        <th>Date of Death</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set recent = records[:5] if records is defined else [] %}
+                    {% if recent %}
+                        {% for r in recent %}
+                        <tr>
+                            <td>{{ r.full_name }}</td>
+                            <td>{{ r.date_of_birth }}</td>
+                            <td>{{ r.date_of_death }}</td>
+                            <td>
+                                <a href="{{ url_for('view_obituary', id=r.id) }}" class="btn btn-sm btn-info">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No records yet. Click "Add Obituary" to create one.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.action-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    border-radius: 15px;
+}
+.action-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+}
+.icon {
+    font-size: 48px;
+}
+</style>
+
+{% endblock %}
